@@ -1,0 +1,95 @@
+#!/usr/bin/env python2
+
+from PyQt4 import QtGui, QtCore, uic
+import sys, subprocess
+import dcdctest
+#import fake
+TestQDialog = uic.loadUiType("manual_tests.ui")[0]
+
+class ManualTests(QtGui.QDialog, TestQDialog):
+    def __init__(self, parent=None):
+        QtGui.QDialog.__init__(self,parent)
+        self.setupUi( self)
+	self.show()
+
+	test1Button = self.findChild(QtGui.QPushButton, 'pushButton_2')
+	test1Button.clicked.connect(self.test1)
+
+	test2Button = self.findChild(QtGui.QPushButton, 'pushButton_3')
+        test2Button.clicked.connect(self.test2)
+
+    def test1(self):
+	       dcdctest.test_c_input()
+
+    def test2(self):
+        dcdctest.test_no_load()
+
+
+class MyWindow(QtGui.QMainWindow):
+    def __init__(self):
+        super(MyWindow, self).__init__()
+        uic.loadUi('main.ui', self)
+
+	self.initUI()
+
+    def initUI(self):
+
+        openMenu = self.findChild(QtGui.QAction, 'actionInstructions')
+        openMenu.triggered.connect(self.openPDF)
+
+        self.fileMenu = self.findChild(QtGui.QAction, 'actionManualTester')
+        self.fileMenu.triggered.connect(self.startManualTester)
+
+        editMenu = self.findChild(QtGui.QAction, 'actionChangeInputValues')
+        editMenu.triggered.connect(self.changeInputValues)
+
+        nameEdit = self.findChild(QtGui.QLineEdit, 'nameEdit')
+        nameEdit.textEdited.connect(self.enableStart)
+
+        barcodeEdit = self.findChild(QtGui.QLineEdit, 'barcodeEdit')
+        barcodeEdit.textEdited.connect(self.enableStart)
+
+        self.stackWidget = self.findChild(QtGui.QStackedWidget, 'stackedWidget')
+        startButton = self.findChild(QtGui.QPushButton, 'startButton')
+        startButton.clicked.connect(self.startButtonPressed)
+
+        self.test1Label = self.findChild(QtGui.QLabel,'label_9')
+
+        self.show()
+
+    def startManualTester(self):
+        dialog = ManualTests()
+        dialog.exec_()
+
+    def changeInputValues(self):
+        print "change values"
+
+    def enableStart(self):
+        if not self.nameEdit.text().isEmpty() and self.barcodeEdit.text().length() == 0:
+            self.startButton.setEnabled(True)
+        else:
+            self.startButton.setEnabled(False)
+
+    def openPDF(self):
+        command = 'xreader ./fake_manual.pdf'
+        subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+
+    def startButtonPressed(self):
+        self.fileMenu.setEnabled(False)
+        self.stackWidget.setCurrentIndex(1)
+        #result1,result2 = fake.test_func(4)
+        #print result1
+        #print result2
+        #self.test1Label.setText('Fail')
+        #self.test1Label.setStyleSheet('color: red; font-weight: bold')
+        self.runTest()
+
+    def runTest(self):
+      print("This is runtest")
+      test1 = dcdctest.power_on()
+
+
+if __name__ == '__main__':
+    app = QtGui.QApplication(sys.argv)
+    window = MyWindow()
+    sys.exit(app.exec_())
